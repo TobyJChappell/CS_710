@@ -1,0 +1,4 @@
+library(ggplot2)
+nba <- read.csv("nba-elo.csv", header=TRUE)
+ggplot(nba, aes(x=game_result, y=elo_n)) + geom_boxplot()
+
