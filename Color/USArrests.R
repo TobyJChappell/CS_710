@@ -11,6 +11,6 @@ crimes<-data.frame(state=tolower(rownames(USArrests)),USArrests)
 crime_map<-merge(states_map,crimes,by.x="region",by.y="state")
 crime_map<-arrange(crime_map,group,order)
 
-ggplot(crime_map,aes(x=long,y=lat,group=group,fill=Murder)) + 
+ggplot(crime_map,aes(x=long,y=lat,group=group)) + 
   coord_map("polyconic") + 
-  geom_polygon(fill=hsv((max(crime_map$Murder)-(crime_map$Murder-min(crime_map$Murder)))/(max(crime_map$Murder)-min(crime_map$Murder))/7,(crime_map$Murder-min(crime_map$Murder))/(max(crime_map$Murder)-min(crime_map$Murder)),1))
+  geom_polygon(fill=hsv((max(crime_map$Murder)-crime_map$Murder)/(max(crime_map$Murder)-min(crime_map$Murder))/7,(crime_map$Murder-min(crime_map$Murder))/(max(crime_map$Murder)-min(crime_map$Murder)),1))
