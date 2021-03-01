@@ -18,9 +18,9 @@ blur <- ggplot(iris[Is_Versicolor, ],aes(x=Sepal.Width,y=Sepal.Length)) + geom_p
 blur + geom_point() + stat_echo(data=iris[!Is_Versicolor, ],size=.1)
 
 #PART 2
-#Hue and Brightness
-iris_plot + geom_point(aes(color=Species)) +
-  scale_color_manual(breaks = c("setosa", "versicolor", "virginica"), values=c(hsv(.15,1,.15), hsv(.5,1,.5), hsv(.85,1,.85)))
+#Shape and Hue
+iris_plot + geom_point(aes(color=Species,shape=Species)) +
+  scale_color_manual(breaks = c("setosa", "versicolor", "virginica"), values=c(hsv(.1,1,.9), hsv(.5,1,.9), hsv(.9,1,.9)))
 
 #Shape and Brightness
 iris_plot + geom_point(aes(color=Species,shape=Species)) +
