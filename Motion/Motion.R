@@ -1,10 +1,6 @@
-# Animating 3D plots example 
-
-#### Required Libraries ####
 library(ggplot2)
 library(scatterplot3d)
 library(viridis)
-setwd("/Users/tobychappell/Documents/CS_Courses/CS_710/Motion")
 
 gpc3d2<-function(data,parameter1,parameter2,parameter3,alpha,xadj,yadj,colors){
   par1<-data[,which(names(data)==parameter1)]
@@ -24,10 +20,8 @@ gpc3d2<-function(data,parameter1,parameter2,parameter3,alpha,xadj,yadj,colors){
   return(gpc3d.object)
 }
 
-#### Loading Data ####
 iris <- iris
 
-#### 3D Scatterplot Anim ####
 colors <- c("#999999", "#E69F00", "#56B4E9")
 colors <- colors[as.numeric(iris$Species)]
 w=5.25
