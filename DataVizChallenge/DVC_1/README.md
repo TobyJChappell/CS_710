@@ -7,5 +7,5 @@ The data was collected by averaging out the happiness scores from 2015-2019 and 
 
 ## Instructions
 1. Open Happiness_Latitude.R in RStudio
-2. Set Working Directory to Workshop1Group3
+2. Set Working Directory to DVC_1
 3. Run Happiness_Latitude.R 
