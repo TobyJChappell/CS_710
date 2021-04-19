@@ -5,56 +5,132 @@ library(ggplot2)
 library(dplyr)
 library(tidyr)
 library(tidyquant)
+library(reshape2)
 
 # DISNEY
 disney <- read.csv(file = 'disney_plus_shows.csv')
 
-disney$date_added <- as.Date(disney$added_at,"%B %d, %Y")
-disney <- disney[!is.na(disney$date_added),]
 disney$date_released <- as.Date(disney$released_at,"%d %b %Y")
 disney <- disney[!is.na(disney$date_released),]
 disney$imdb_score <- as.numeric(disney$imdb_rating)
 disney <- disney[!is.na(disney$imdb_score),]
 
-ggplot(disney,aes(x=imdb_score)) + geom_histogram()
+genre_list <- c("genre_1","genre_2","genre_3","genre_4","genre_5","genre_6","genre_7","genre_8","genre_9")
+df <- separate(data = disney, col = genre, into = genre_list, sep = ",")
+for (g in 10:18){
+  df[na.omit(df[,g]=="N/A"|df[,g]=="History"|df[,g]=="Music"|df[,g]=="Musical"|df[,g]=="Reality-TV"|df[,g]=="Short"),g] = "Other"
+}
+genres_1 <- df %>% group_by(genre=genre_1) %>% summarize(rating_1=mean(imdb_score), n_1 = n()) 
+genres_2 <- df %>% group_by(genre=genre_2) %>% summarize(rating_2=mean(imdb_score), n_2 = n()) %>% drop_na()
+genres_3 <- df %>% group_by(genre=genre_3) %>% summarize(rating_3=mean(imdb_score), n_3 = n()) %>% drop_na()
+genres_4 <- df %>% group_by(genre=genre_4) %>% summarize(rating_4=mean(imdb_score), n_4 = n()) %>% drop_na()
+genres_5 <- df %>% group_by(genre=genre_5) %>% summarize(rating_5=mean(imdb_score), n_5 = n()) %>% drop_na()
+genres_6 <- df %>% group_by(genre=genre_6) %>% summarize(rating_6=mean(imdb_score), n_6 = n()) %>% drop_na()
+genres_7 <- df %>% group_by(genre=genre_7) %>% summarize(rating_7=mean(imdb_score), n_7 = n()) %>% drop_na()
+genres_8 <- df %>% group_by(genre=genre_8) %>% summarize(rating_8=mean(imdb_score), n_8 = n()) %>% drop_na()
+genres_9 <- df %>% group_by(genre=genre_9) %>% summarize(rating_9=mean(imdb_score), n_9 = n()) %>% drop_na()
 
-df <- separate(data = disney, col = genre, into = c("genre_1"), sep = ",")
-df <- df[!(df$genre_1=="N/A"|df$genre_1=="History"|df$genre_1=="Music"|df$genre_1=="Musical"|df$genre_1=="Reality-TV"|df$genre_1=="Short"),]
+genres <- merge(x=genres_1,y=genres_2,by="genre",all=TRUE)
+genres <- merge(x=genres,y=genres_3,by="genre",all=TRUE)
+genres <- merge(x=genres,y=genres_4,by="genre",all=TRUE)
+genres <- merge(x=genres,y=genres_5,by="genre",all=TRUE)
+genres <- merge(x=genres,y=genres_6,by="genre",all=TRUE)
+genres <- merge(x=genres,y=genres_7,by="genre",all=TRUE)
+genres <- merge(x=genres,y=genres_8,by="genre",all=TRUE)
+genres <- merge(x=genres,y=genres_9,by="genre",all=TRUE)
+
+genres[is.na(genres)] <- 0
+genres_group <- genres %>% group_by(genre) %>% summarise(mean_imdb = (rating_1*n_1+rating_2*n_2+rating_3*n_3+rating_4*n_4+rating_5*n_5+rating_6*n_6+rating_7*n_7+rating_8*n_8+rating_9*n_9)/(n_1+n_2+n_3+n_4+n_5+n_6+n_7+n_8+n_9),n = n_1+n_2+n_3+n_4+n_5+n_6+n_7+n_8+n_9)
+genres_group <- as.data.frame(genres_group)
+genres_group <- genres_group[order(genres_group$n),]
+genres_ten <- tail(genres_group,10)
+ggplot(genres_ten,aes(x=genre,y=n,fill=mean_imdb)) +
+  geom_bar(stat="identity") + 
+  geom_text(aes(label=round(mean_imdb,digits=2)),vjust = 1.5,color="white") + 
+  theme_classic()
+
 ggplot(df,aes(x=date_released,y=imdb_score,color=genre_1)) + 
   geom_point() +
   geom_smooth(method = "loess", se = FALSE, color = "#111E4F") +
-  theme_classic() +
-  scale_color_brewer()
+  theme_classic()
+  scale_color_gradient(low="#111E4F",high="#74D3E6")
 
-# NETFLIX
-netflix <- read.csv(file = 'netflix_titles.csv')
-ggplot(netflix,aes(x=imdb_score))+geom_histogram()
+ratings <- disney %>% group_by(Age) %>% count()
+ratings$Age <- factor(ratings$Age,levels = c("all","7+","13+","16+","18+"))
+ratings <- ratings %>% drop_na()
+ratings$fraction <- ratings$n/sum(ratings$n)
+ratings$ymax = cumsum(ratings$fraction)
+ratings$ymin = c(0, head(ratings$ymax, n=-1))
+ratings$labelPosition <- (ratings$ymax + ratings$ymin) / 2
+ratings$label <- paste0(ratings$n)
 
+ggplot(ratings, aes(ymax=ymax, ymin=ymin, xmax=4, xmin=3, fill=Age)) +
+  geom_rect() +
+  geom_text( x=4.5, aes(y=labelPosition, label=label, color=Age), size=6) +
+  scale_colour_manual(values=c("#111E4F","#294b74","#42789a","#5ba5c0","#74D3E6")) +
+  scale_fill_manual(values=c("#111E4F","#294b74","#42789a","#5ba5c0","#74D3E6")) +
+  coord_polar(theta="y") +
+  xlim(c(1, 4)) +
+  theme_void()
 
-
-# BOTH
+# COMPARISON
 streaming <- read.csv(file = 'streaming_platforms.csv')
-streaming <- streaming%>%mutate(platform=case_when(
-  Netflix==1 & Disney.==0 ~ "Netflix",
-  Netflix==0 & Disney.==1 ~ "Disney+",
-  Netflix==1 & Disney.==1 ~ "Both"
-))
-streaming <- streaming[!is.na(streaming$platform),]
-streaming <- streaming[!streaming$platform=="Both",]
-streaming <- streaming[!is.na(streaming$IMDb),]
-mu<-streaming %>% group_by(p=platform) %>% summarise(m=mean(IMDb)) 
-ggplot(streaming,aes(x=IMDb,color=platform,fill=platform)) + 
-  geom_histogram(alpha=.5,position="identity") + 
-  #geom_density(alpha=0.5) +
-  geom_vline(data=mu, aes(xintercept=m, color=p), linetype="dashed") +
+streaming <- streaming[!is.na(streaming$Prime.Video | streaming$Netflix | streaming$Hulu | streaming$Disney.),]
+prime <- streaming[streaming$Prime.Video==1,]
+prime <- prime[!is.na(prime$IMDb),]
+prime_mu <- mean(prime$IMDb)
+netflix <- streaming[streaming$Netflix==1,]
+netflix <- netflix[!is.na(netflix$IMDb),]
+netflix_mu <- mean(netflix$IMDb)
+hulu <- streaming[streaming$Hulu==1,]
+hulu <- hulu[!is.na(hulu$IMDb),]
+hulu_mu <- mean(hulu$IMDb)
+disney <- streaming[streaming$Disney.==1,]
+disney <- disney[!is.na(disney$IMDb),]
+disney_mu <- mean(disney$IMDb)
+
+# Histogram
+ggplot() + 
+  geom_histogram(data=prime,aes(x=IMDb),alpha=0.5,color="#FA7E17",fill="#FA7E17") + 
+  geom_histogram(data=netflix,aes(x=IMDb),alpha=0.5,color="#AF0C19",fill="#AF0C19") + 
+  geom_histogram(data=hulu,aes(x=IMDb),alpha=0.5,color="#30E587",fill="#30E587") + 
+  geom_histogram(data=disney,aes(x=IMDb),alpha=0.5,color="#111E4F",fill="#111E4F") + 
+  geom_vline(aes(xintercept=prime_mu), color="#FA7E17", linetype="dashed") +
+  geom_vline(aes(xintercept=netflix_mu), color="#AF0C19", linetype="dashed") +
+  geom_vline(aes(xintercept=hulu_mu), color="#30E587", linetype="dashed") +
+  geom_vline(aes(xintercept=disney_mu), color="#111E4F", linetype="dashed") +
+  theme_classic()
+
+# Density Plot
+ggplot() + 
+  geom_density(data=prime,aes(x=IMDb),alpha=0.25,color="grey60",fill="grey60") + 
+  geom_density(data=netflix,aes(x=IMDb),alpha=0.25,color="grey75",fill="grey75") + 
+  geom_density(data=hulu,aes(x=IMDb),alpha=0.25,color="grey90",fill="grey90") + 
+  geom_density(data=disney,aes(x=IMDb),alpha=0.5,color="#111E4F",fill="#111E4F") + 
+  geom_vline(aes(xintercept=prime_mu), color="grey60", linetype="dashed") +
+  geom_vline(aes(xintercept=netflix_mu), color="grey75", linetype="dashed") +
+  geom_vline(aes(xintercept=hulu_mu), color="grey90", linetype="dashed") +
+  geom_vline(aes(xintercept=disney_mu), color="#111E4F", linetype="dashed") +
+  theme_classic()
+
+age <- streaming %>% group_by(Age) %>% summarize(prime=sum(Prime.Video),netflix=sum(Netflix),hulu=sum(Hulu),disney=sum(Disney.))
+age$Age <- factor(age$Age,levels = c("all","7+","13+","16+","18+"))
+age <- age %>% drop_na()
+age <- melt(age, id.vars='Age')
+ggplot(age,aes(x=Age,y=value,fill=variable)) + 
+  geom_bar(stat="identity",position="dodge") +
   theme_classic() +
-  scale_color_manual(values=c("#111E4F","#AF0C19")) +
-  scale_fill_manual(values=c("#111E4F","#AF0C19"))
+  scale_fill_manual(values=c("#FA7E17","#AF0C19","#30E587","#111E4F"))
 
 # Waffle plot
-streaming %>% count(platform) # get counts of streaming platforms
-platform <- c('Netflix' = 3550,'Both'=10,'Disney+'=554)
+platform <- streaming %>% summarize(Netflix=sum(Netflix),Hulu=sum(Hulu),Prime.Video=sum(Prime.Video),Disney.=sum(Disney.))
+platform <- c('Prime Video'=12354,'Netlflix' = 3560,'Hulu'=903,'Disney+'=554)
 waffle(
-  platform/2, rows = 17, size =0.125, 
-  colors = c("#AF0C19","#601534","#111E4F"), legend_pos = "bottom"
+  platform/10, rows = 20, size =0.125, 
+  colors = c("#FA7E17","#AF0C19","#30E587","#111E4F"), legend_pos = "bottom"
+)
+
+waffle(
+  platform/10, rows = 20, size =0.125, 
+  colors = c("grey60","grey75","grey90","#111E4F"), legend_pos = "bottom"
 )

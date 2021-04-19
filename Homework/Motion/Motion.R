@@ -1,0 +1,35 @@
+library(ggplot2)
+library(scatterplot3d)
+library(viridis)
+
+gpc3d2<-function(data,parameter1,parameter2,parameter3,alpha,xadj,yadj,colors){
+  par1<-data[,which(names(data)==parameter1)]
+  par2<-data[,which(names(data)==parameter2)]
+  par3<-data[,which(names(data)==parameter3)]
+  gpc3d.object<-scatterplot3d(par1,par2,par3,
+                              pch=16,color=colors,
+                              xlab=parameter1,
+                              ylab="",
+                              zlab=parameter3,
+                              angle=alpha,y.margin.add=1)
+  dims <- par("usr")
+  x <- dims[1]+ xadj*diff(dims[1:2])
+  y <- dims[3]+ yadj*diff(dims[3:4])
+  text(x,y,parameter2,srt=alpha,font=1,cex=1.0)
+  gpc3d.object
+  return(gpc3d.object)
+}
+
+iris <- iris
+
+colors <- c("#999999", "#E69F00", "#56B4E9")
+colors <- colors[as.numeric(iris$Species)]
+w=5.25
+h=5
+i=75
+for (i in seq(0,180,by=1)){
+  png(filename=paste("animIris/Iris",i,".png",sep=""),width=w,height=h,unit="in",res=200)
+  gpc3d.object<-gpc3d2(iris,"Sepal.Length","Sepal.Width","Petal.Length",i,0.85,0.2,colors)
+  gpc3d.object
+  dev.off()
+}
