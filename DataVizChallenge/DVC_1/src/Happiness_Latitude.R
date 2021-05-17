@@ -8,6 +8,24 @@ library(gridExtra)
 #Read in combined happiness data (2015-2019)
 data <- read.csv(file = 'data/pop-happiness.csv')
 
+min_score<-min(data$HappinessScore)
+max_score<-max(data$HappinessScore)
+data<-data %>% group_by(Country,Region) %>% summarize(score=mean(HappinessScore))
+data<-data %>% group_by(Region) %>% mutate(mean_score=mean(score))
+data<- data %>% drop_na()
+data <- data[!grepl("#N/A", data$Region),]
+region_plot <- ggplot(data,aes(x=score,y=Region,fill=mean_score)) + 
+  geom_boxplot() +
+  ggtitle("Happiness vs Region") +
+  xlab(label="Happiness Score") +
+  ylab(label="Region") +
+  labs(fill="Happiness Score") +
+  theme_classic() + 
+  theme(legend.position='bottom') +
+  scale_fill_viridis_c(option="magma",limits=c(min_score,max_score))
+region_plot
+data <- read.csv(file = 'data/pop-happiness.csv')
+
 #Edit specific labels to merge with countries data set
 data$Country[data$Country=="United States"] <- "USA"
 data$Country[data$Country=="United Kingdom"] <- "UK"
@@ -89,3 +107,7 @@ box_pop_plot
 lay <- rbind(c(1,1,1,1,1),
              c(NA,2,2,2,NA))
 grid.arrange(map_pop_plot, box_pop_plot, layout_matrix = lay)
+
+lay <- rbind(c(1,1,1,1,1),
+             c(2,2,2,2,2))
+grid.arrange(map_plot, region_plot, layout_matrix = lay)

@@ -7,3 +7,6 @@
 [submodule "Workshop1Group3"]
 	path = Workshop1Group3
 	url = https://github.com/CS-710-DataViz-Spring2021/Workshop1Group3.git
+[submodule "CS_710_FinalProject"]
+	path = CS_710_FinalProject
+	url = https://github.com/TobyJChappell/CS_710_FinalProject.git
